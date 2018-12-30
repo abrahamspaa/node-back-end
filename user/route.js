@@ -1,79 +1,21 @@
-const express = require('express');
-const router = express.Router();
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const { Router } = require('express');
+const router = Router();
 
-const User = require('./model');
+const { create, findOne, findAll, deleteOne, deleteAll } = require('./controller');
 
-router.post('/signup', function(req, res) {
-   bcrypt.hash(req.body.password, 10, function(err, hash) {
+// Create a new user
+router.post('/', create);
 
-      if(err) {
-         return res.status(500).json({
-            error: err
-         });
-      }
-      else {
-         const user = new User({
-            _id: new  mongoose.Types.ObjectId(),
-            email: req.body.email,
-            password: hash
-         });
-         user.save().then(function(result) {
-            console.log(result);
-            res.status(200).json({
-               success: 'New user has been created'
-            });
-         }).catch(error => {
-            res.status(500).json({
-               error: err
-            });
-         });
-      }
-   });
-});
+// Get only one user
+router.get('/:email', findOne);
 
-router.post('/login', function(req, res){
+// Get user list
+router.get('/', findAll);
 
-   User.findOne({email: req.body.email})
-   .exec()
-   .then(function(user) {
+// Delete a user
+router.delete('/:email', deleteOne);
 
-      bcrypt.compare(req.body.password, user.password, function(err, result){
-
-         if(err) {
-            return res.status(401).json({
-               failed: 'Unauthorized Access'
-            });
-         }
-
-         if(result) {
-           const JWTToken = jwt.sign({
-               email: user.email,
-               _id: user._id
-             },
-             'secret',
-             {
-                expiresIn: '2h'
-              });
-
-            return res.status(200).json({
-               success: 'Welcome to the JWT Auth',
-               token: JWTToken
-            });
-         }
-
-         return res.status(401).json({
-            failed: 'Unauthorized Access'
-         });
-      });
-   })
-   .catch(error => {
-      res.status(500).json({
-         error: error
-      });
-   });;
-});
+// Delete all user
+router.delete('/', deleteAll);
 
 module.exports = router;
